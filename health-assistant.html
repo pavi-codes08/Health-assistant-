@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Health Assistant</title>
+
+<style>
+  :root{
+    --bg: #EFF5F4;
+    --card: #FFFFFF;
+    --ink: #16302E;
+    --muted: #5B7371;
+    --teal: #2E6F6E;
+    --teal-dark: #1F4E4D;
+    --teal-soft: #DCEEEC;
+    --alert: #C9542C;
+    --alert-soft: #FBE9E1;
+    --line: #E1EAE8;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", sans-serif;
+    background: var(--bg);
+    margin: 0;
+    padding: 0;
+    color: var(--ink);
+  }
+
+  .container {
+    max-width: 520px;
+    margin: auto;
+    padding: 20px;
+  }
+
+  /* header */
+  .header-card{
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: #fff;
+    padding: 22px 20px 18px;
+    border-radius: 18px;
+    box-shadow: 0 6px 20px rgba(31,78,77,0.25);
+    margin-bottom: 16px;
+  }
+
+  .header-top{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  h1 {
+    text-align: left;
+    font-weight: 600;
+    font-size: 21px;
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+
+  .subtitle{
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+  }
+
+  /* pulse signature element */
+  .pulse-wrap{
+    margin-top: 14px;
+    height: 26px;
+    overflow: hidden;
+  }
+  .pulse-line{
+    width: 200%;
+    height: 26px;
+  }
+  .pulse-path{
+    fill: none;
+    stroke: rgba(255,255,255,0.55);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .pulse-line{
+    animation: pulseScroll 3.2s linear infinite;
+  }
+  @keyframes pulseScroll{
+    from{ transform: translateX(0); }
+    to{ transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .pulse-line{ animation: none; }
+  }
+
+  /* cards */
+  .card {
+    background: var(--card);
+    padding: 16px;
+    margin: 15px 0;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(31,78,77,0.06);
+    border: 1px solid var(--line);
+  }
+
+  .card-label{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin: 0 0 10px;
+  }
+
+  /* search */
+  .search-row{
+    display:flex;
+    gap: 8px;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 20px;
+    border: 1px solid #d1d5db;
+    outline: none;
+    font-size: 14px;
+    background: #F8FAFA;
+    color: var(--ink);
+  }
+
+  input:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(46,111,110,0.15);
+    background: #fff;
+  }
+
+  button {
+    padding: 10px 16px;
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  button:hover {
+    background: var(--teal-dark);
+  }
+
+  button:active{
+    transform: scale(0.98);
+  }
+
+  /* suggestions */
+  #suggestions {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    max-height: 180px;
+    overflow-y: auto;
+    margin-top: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: none;
+  }
+
+  .suggestion-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .suggestion-item:last-child{ border-bottom: none; }
+
+  .suggestion-item:hover {
+    background: var(--teal-soft);
+  }
+
+  /* quick chips */
+  .chip-row{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .chip{
+    font-size: 12.5px;
+    padding: 6px 12px;
+    border-radius: 14px;
+    background: var(--teal-soft);
+    color: var(--teal-dark);
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .chip:hover{
+    border-color: var(--teal);
+  }
+
+  /* CHAT BOX */
+  #chatBox {
+    height: 320px;
+    overflow-y: auto;
+    padding: 10px;
+    background: var(--bg);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .empty-state{
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13.5px;
+    padding: 0 20px;
+    line-height: 1.5;
+  }
+
+  /* message bubbles */
+  .msg {
+    max-width: 80%;
+    padding: 10px 13px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.45;
+    word-wrap: break-word;
+  }
+
+  .user {
+    align-self: flex-end;
+    background: var(--teal);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .ai {
+    align-self: flex-start;
+    background: white;
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 4px;
+  }
+
+  .ai b{
+    color: var(--teal-dark);
+  }
+
+  .ai .warn{
+    color: var(--alert);
+    font-weight: 600;
+  }
+
+  .ai .serious-box{
+    background: var(--alert-soft);
+    color: var(--alert);
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13.5px;
+    margin-top: 4px;
+  }
+
+  .ai .footnote{
+    display:block;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 500;
+  }
+
+  /* disclaimer */
+  .disclaimer{
+    text-align:center;
+    font-size: 11.5px;
+    color: var(--muted);
+    padding: 4px 10px 20px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header-card">
+    <div class="header-top">
+      <h1>Health Assistant</h1>
+    </div>
+    <p class="subtitle">Type a symptom to get quick, basic guidance</p>
+    <div class="pulse-wrap">
+      <svg class="pulse-line" viewBox="0 0 400 26" preserveAspectRatio="none">
+        <path class="pulse-path" d="M0,13 L60,13 L75,13 L85,3 L95,23 L105,13 L120,13 L200,13 L215,13 L225,3 L235,23 L245,13 L260,13 L340,13 L355,13 L365,3 L375,23 L385,13 L400,13"/>
+        <path class="pulse-path" d="M400,13 L460,13 L475,13 L485,3 L495,23 L505,13 L520,13 L600,13 L615,13 L625,3 L635,23 L645,13 L660,13 L740,13 L755,13 L765,3 L775,23 L785,13 L800,13" transform="translate(-400,0)"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-label">Check a symptom</p>
+    <div class="search-row">
+      <input type="text" id="symptomInput" placeholder="e.g. headache, cold, back pain..." autocomplete="off">
+      <button onclick="checkSymptom()">Check</button>
+    </div>
+    <div id="suggestions"></div>
+    <div class="chip-row">
+      <span class="chip" onclick="quickCheck('headache')">Headache</span>
+      <span class="chip" onclick="quickCheck('fever')">Fever</span>
+      <span class="chip" onclick="quickCheck('cold')">Cold</span>
+      <span class="chip" onclick="quickCheck('stomach pain')">Stomach pain</span>
+      <span class="chip" onclick="quickCheck('allergy')">Allergy</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-label">Guidance</p>
+    <div id="chatBox">
+      <div class="empty-state" id="emptyState">
+        No symptoms checked yet.<br>Search above or tap a quick option to get started.
+      </div>
+    </div>
+  </div>
+
+  <p class="disclaimer">
+    ⚠️ This tool gives basic, general guidance only and is not a substitute for professional medical advice.
+    Always consult a doctor for diagnosis and treatment.
+  </p>
+
+</div>
+
+<script>
+// reusable dosage blocks
+const commonDosage = {
+  paracetamol: `
+  0–5 yrs: 120–250 mg every 4–6 hrs<br>
+  6–12 yrs: 250–500 mg<br>
+  13+ yrs: 500 mg<br>
+  Adults: 500–650 mg
+  `,
+  ibuprofen: `
+  Children: 5–10 mg/kg<br>
+  Adults: 200–400 mg
+  `
+};
+
+// full data (50 symptoms)
+const data = {
+"headache": {problem:"Headache", medicine:"Paracetamol", dosage:commonDosage.paracetamol},
+"fever": {problem:"Fever", medicine:"Paracetamol", dosage:commonDosage.paracetamol},
+"cold": {problem:"Cold", medicine:"Cetirizine", dosage:"10 mg"},
+"dry cough": {problem:"Dry cough", medicine:"Dextromethorphan", dosage:"10–20 mg"},
+"wet cough": {problem:"Wet cough", medicine:"Ambroxol", dosage:"30 mg"},
+"vomiting": {problem:"Vomiting", medicine:"Ondansetron", dosage:"4–8 mg"},
+"diarrhea": {problem:"Diarrhea", medicine:"ORS + Zinc", dosage:"ORS frequently"},
+"constipation": {problem:"Constipation", medicine:"Lactulose", dosage:"15–30 ml"},
+"acidity": {problem:"Acidity", medicine:"Pantoprazole", dosage:"20–40 mg"},
+"stomach pain": {problem:"Stomach pain", medicine:"Dicycloverine", dosage:"10–20 mg"},
+"toothache": {problem:"Toothache", medicine:"Ibuprofen", dosage:commonDosage.ibuprofen},
+"ear pain": {problem:"Ear pain", medicine:"Paracetamol", dosage:commonDosage.paracetamol},
+"body pain": {problem:"Body pain", medicine:"Paracetamol", dosage:commonDosage.paracetamol},
+"back pain": {problem:"Back pain", medicine:"Diclofenac", dosage:"50 mg"},
+"joint pain": {problem:"Joint pain", medicine:"Ibuprofen", dosage:commonDosage.ibuprofen},
+"muscle pain": {problem:"Muscle pain", medicine:"Ibuprofen", dosage:commonDosage.ibuprofen},
+"allergy": {problem:"Allergy", medicine:"Loratadine", dosage:"10 mg"},
+"skin rash": {problem:"Skin rash", medicine:"Calamine", dosage:"Apply"},
+"fungal infection": {problem:"Fungal infection", medicine:"Clotrimazole", dosage:"Apply"},
+"acne": {problem:"Acne", medicine:"Benzoyl peroxide", dosage:"Apply"},
+"dandruff": {problem:"Dandruff", medicine:"Ketoconazole", dosage:"Weekly"},
+"hair fall": {problem:"Hair fall", medicine:"Minoxidil", dosage:"Apply"},
+"eye irritation": {problem:"Eye irritation", medicine:"Eye drops", dosage:"2–4× daily"},
+"dehydration": {problem:"Dehydration", medicine:"ORS", dosage:"Frequent"},
+"heat exhaustion": {problem:"Heat exhaustion", medicine:"ORS", dosage:"Frequent"},
+"migraine": {problem:"Migraine", medicine:"Sumatriptan", dosage:"50–100 mg"},
+"sinusitis": {problem:"Sinusitis", medicine:"Phenylephrine", dosage:"10 mg"},
+"tonsillitis": {problem:"Tonsillitis", medicine:"Paracetamol", dosage:commonDosage.paracetamol},
+"bronchitis": {problem:"Bronchitis", medicine:"Ambroxol", dosage:"Same as cough"},
+"asthma": {problem:"Asthma", medicine:"Salbutamol inhaler", dosage:"1–2 puffs"},
+"uti": {problem:"UTI", medicine:"Nitrofurantoin", dosage:"100 mg"},
+"menstrual pain": {problem:"Period pain", medicine:"Mefenamic acid", dosage:"500 mg"},
+"vitamin deficiency": {problem:"Vitamin deficiency", medicine:"Vitamin D", dosage:"Weekly"},
+"food poisoning": {problem:"Food poisoning", medicine:"ORS + Ondansetron", dosage:"Hydration"},
+"worm infection": {problem:"Worm infection", medicine:"Albendazole", dosage:"400 mg"},
+"anxiety": {problem:"Anxiety", medicine:"Therapy", dosage:"Varies"},
+"diabetes": {problem:"Diabetes", medicine:"Metformin", dosage:"500 mg"},
+"hypertension": {problem:"Hypertension", medicine:"Amlodipine", dosage:"5 mg"},
+"dengue": {problem:"Dengue", medicine:"Paracetamol", dosage:commonDosage.paracetamol},
+"malaria": {problem:"Malaria", medicine:"ACT", dosage:"Doctor required"},
+"typhoid": {problem:"Typhoid", medicine:"Antibiotics", dosage:"Doctor required"},
+"tuberculosis": {problem:"Tuberculosis", medicine:"Anti-TB drugs", dosage:"Long-term"},
+"pneumonia": {problem:"Pneumonia", medicine:"Antibiotics", dosage:"Doctor required"},
+"covid": {problem:"COVID", medicine:"Paracetamol", dosage:commonDosage.paracetamol},
+"hepatitis": {problem:"Hepatitis", medicine:"Antivirals", dosage:"Doctor required"},
+"heart disease": {problem:"Heart disease", medicine:"Aspirin", dosage:"75–150 mg"},
+"stroke": {problem:"Stroke", medicine:"Emergency care", dosage:"Hospital required"},
+"kidney disease": {problem:"Kidney disease", medicine:"Varies", dosage:"Doctor required"},
+"cancer": {problem:"Cancer", medicine:"Chemotherapy", dosage:"Specialist required"},
+"sepsis": {problem:"Sepsis", medicine:"IV antibiotics", dosage:"ICU required"}
+};
+
+const seriousList = ["cancer","stroke","sepsis","heart disease"];
+const symptomKeys = Object.keys(data);
+
+// find best match: prefers the most specific key contained in the input,
+// falls back to a key that contains the (longer) input text.
+function findMatch(rawInput){
+  const input = rawInput.toLowerCase().trim();
+  if(!input) return null;
+  if(data[input]) return { key: input, entry: data[input] };
+
+  let bestKey = null;
+  for(const key of symptomKeys){
+    if(input.includes(key)){
+      if(!bestKey || key.length > bestKey.length) bestKey = key;
+    }
+  }
+  if(bestKey) return { key: bestKey, entry: data[bestKey] };
+
+  if(input.length >= 4){
+    for(const key of symptomKeys){
+      if(key.includes(input)) return { key, entry: data[key] };
+    }
+  }
+  return null;
+}
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function addMessage(html, sender){
+  const chatBox = document.getElementById("chatBox");
+  const emptyState = document.getElementById("emptyState");
+  if(emptyState) emptyState.remove();
+
+  const bubble = document.createElement("div");
+  bubble.className = "msg " + sender;
+  bubble.innerHTML = html;
+  chatBox.appendChild(bubble);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function checkSymptom(){
+  const inputEl = document.getElementById("symptomInput");
+  const rawValue = inputEl.value;
+  if(!rawValue.trim()) return;
+
+  hideSuggestions();
+  addMessage(escapeHtml(rawValue), "user");
+
+  const match = findMatch(rawValue);
+
+  if(!match){
+    addMessage("❌ No match found for that symptom. Try a simpler term (e.g. \"cold\", \"fever\").", "ai");
+  } else if(seriousList.includes(match.key)){
+    addMessage(`
+      <b>${match.entry.problem}</b>
+      <div class="serious-box">⚠️ Serious condition — consult a doctor immediately.</div>
+    `, "ai");
+  } else {
+    addMessage(`
+      <b>Problem:</b> ${match.entry.problem}<br>
+      <b>Medicine:</b> ${match.entry.medicine}<br>
+      <b>Dosage:</b> ${match.entry.dosage}
+      <span class="footnote">⚠️ Basic guidance only — not a diagnosis.</span>
+    `, "ai");
+  }
+
+  inputEl.value = "";
+  inputEl.focus();
+}
+
+function quickCheck(term){
+  document.getElementById("symptomInput").value = term;
+  checkSymptom();
+}
+
+// suggestions
+const suggestionsBox = document.getElementById("suggestions");
+const symptomInput = document.getElementById("symptomInput");
+
+function showSuggestions(list){
+  if(list.length === 0){ hideSuggestions(); return; }
+  suggestionsBox.innerHTML = list.slice(0,6).map(key =>
+    `<div class="suggestion-item" data-key="${key}">${data[key].problem}</div>`
+  ).join("");
+  suggestionsBox.style.display = "block";
+
+  suggestionsBox.querySelectorAll(".suggestion-item").forEach(item => {
+    item.addEventListener("click", () => {
+      symptomInput.value = item.getAttribute("data-key");
+      checkSymptom();
+    });
+  });
+}
+
+function hideSuggestions(){
+  suggestionsBox.style.display = "none";
+  suggestionsBox.innerHTML = "";
+}
+
+symptomInput.addEventListener("input", () => {
+  const val = symptomInput.value.toLowerCase().trim();
+  if(val.length < 2){ hideSuggestions(); return; }
+  const matches = symptomKeys.filter(key => key.includes(val));
+  showSuggestions(matches);
+});
+
+symptomInput.addEventListener("keydown", (e) => {
+  if(e.key === "Enter"){
+    checkSymptom();
+  } else if(e.key === "Escape"){
+    hideSuggestions();
+  }
+});
+
+document.addEventListener("click", (e) => {
+  if(!e.target.closest(".search-row") && !e.target.closest("#suggestions")){
+    hideSuggestions();
+  }
+});
+</script>
+
+</body>
+</html>
